@@ -1,82 +1,44 @@
-import React, { useEffect, useReducer } from "react";
-import "../styles/App.css";
-import { Loader } from "./Loader";
-import { PhotoFrame } from "./PhotoFrame";
-
-const reducerFunction = (state, action) => {
-  if (action.type === "fetch") {
-    return {
-      title: action.title,
-      url: action.url,
-      isLoading: state.isLoading,
-      id: state.id,
-    };
-  }
-  if (action.type === "trigger") {
-    return {
-      title: state.title,
-      url: state.url,
-      isLoading: state.isLoading,
-      id: action.id,
-    };
-  }
-  if (action.type === "startLoading") {
-    return {
-      title: state.title,
-      url: state.url,
-      isLoading: true,
-      id: state.id,
-    };
-  }
-  if (action.type === "stopLoading") {
-    return {
-      title: state.title,
-      url: state.url,
-      isLoading: false,
-      id: state.id,
-    };
-  }
-  return state;
-};
-
+import React, { useState } from 'react'
+import '../styles/App.css';
+import { Loader } from './Loader';
+import { PhotoFrame } from './PhotoFrame';
 const App = () => {
-  const [apiData, dispatch] = useReducer(reducerFunction, {
-    title: "",
-    url: "",
-    isLoading: false,
-    id: null,
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      dispatch({ type: "startLoading" });
-      const response = await fetch(
-        `https://jsonplaceholder.typicode.com/photos/${apiData.id}`
-      );
-      const data = await response.json();
-      dispatch({ type: "stopLoading" });
-      dispatch({ type: "fetch", title: data.title, url: data.url });
-
-      console.log(data);
-    };
-    if (apiData.id !== null && apiData.id !== "") {
-      fetchData();
+    const [state, setState] = useState({
+        title: '',
+        url:'',
+        loaderDisplay: false,
+    });
+    
+    const inputHandler =(e)=>{
+        let value = e.target.value;
+        // if(!value) return;
+        setState({
+            ...state,
+            loaderDisplay: true,
+        })
+        fetch('https://jsonplaceholder.typicode.com/photos/'+value)
+        .then((response)=>{
+            return response.json();
+        })
+        .then((data)=>{
+            // console.log(data);
+            setState({
+                title: data.title,
+                url: data.url,
+                loaderDisplay: false,
+            })
+        })
+        .catch((error)=> console.log(error))
     }
-  }, [apiData.id]);
-
-  const inputChangeHandler = (e) => {
-    dispatch({ type: "trigger", id: e.target.value });
-  };
   return (
-    <>
-      <label htmlFor="idNumber">Id number</label>
-      <input id="idNumber" type="number" onChange={inputChangeHandler} />
-      {apiData.id !== null && !apiData.isLoading && (
-        <PhotoFrame url={apiData.url} title={apiData.title} />
-      )}
-      {apiData.isLoading && <Loader />}
-    </>
-  );
-};
+    <div className='App'>
+        <label htmlFor='id-number'>Id number </label>
+        <input onChange={inputHandler} id='id-number' type={'number'} min={1} max={5000} />
+        {state.loaderDisplay ? <Loader /> :
+        state.title ? <PhotoFrame url={state.url} title={state.title} /> : console.log(state.title)}
+    </div>
+  )
+}
+
 
 export default App;
